@@ -1,6 +1,7 @@
 import React from 'react';
-import { Board, Position, COLUMN_LABELS, ROW_LABELS, CellState } from '@/types/game';
+import { Board, Position, COLUMN_LABELS, ROW_LABELS, CellState, Ship } from '@/types/game';
 import { cn } from '@/lib/utils';
+import { ShipSprite } from './ShipSprite';
 
 interface GameBoardProps {
   board: Board;
@@ -40,21 +41,34 @@ export function GameBoard({
   const isHighlighted = (pos: Position) =>
     highlightedCells.some((h) => h.row === pos.row && h.col === pos.col);
 
-  const getCellClassName = (state: CellState, pos: Position) => {
+  // Find ship info for a cell
+  const getShipInfo = (shipId: string | undefined): { ship: Ship | undefined; segmentIndex: number } => {
+    if (!shipId) return { ship: undefined, segmentIndex: 0 };
+    const ship = board.ships.find(s => s.id === shipId);
+    return { ship, segmentIndex: 0 };
+  };
+
+  // Get segment index within the ship
+  const getSegmentIndex = (pos: Position, ship: Ship | undefined): number => {
+    if (!ship) return 0;
+    return ship.positions.findIndex(p => p.row === pos.row && p.col === pos.col);
+  };
+
+  const getCellClassName = (state: CellState, pos: Position, hasShipSprite: boolean) => {
     const highlighted = isHighlighted(pos);
     
-    let baseClass = 'grid-cell transition-all duration-200';
+    let baseClass = 'grid-cell transition-all duration-200 relative';
     
     if (highlighted) {
       baseClass = cn(
         baseClass,
         highlightType === 'valid' ? 'grid-cell-valid' : 'grid-cell-invalid'
       );
-    } else if (state === 'hit') {
+    } else if (state === 'hit' && !hasShipSprite) {
       baseClass = cn(baseClass, 'grid-cell-hit');
     } else if (state === 'miss') {
       baseClass = cn(baseClass, 'grid-cell-miss');
-    } else if (state === 'ship' && showShips && !isAttackBoard) {
+    } else if (state === 'ship' && showShips && !isAttackBoard && !hasShipSprite) {
       baseClass = cn(baseClass, 'grid-cell-ship');
     }
 
@@ -67,15 +81,44 @@ export function GameBoard({
     return baseClass;
   };
 
-  const renderCellContent = (state: CellState) => {
-    if (state === 'hit') {
+  const renderCellContent = (state: CellState, shipId: string | undefined, pos: Position) => {
+    const { ship } = getShipInfo(shipId);
+    const segmentIndex = getSegmentIndex(pos, ship);
+    const isHit = state === 'hit';
+    const isSunk = ship?.isSunk || false;
+
+    // Show ship sprite if showing ships and cell has a ship
+    if (showShips && !isAttackBoard && ship) {
+      return (
+        <ShipSprite
+          shipId={ship.id}
+          size={ship.size}
+          orientation={ship.orientation}
+          segmentIndex={segmentIndex}
+          isHit={isHit}
+          isSunk={isSunk}
+        />
+      );
+    }
+
+    // Show hit marker on attack board when we hit something (but don't show ship)
+    if (isAttackBoard && isHit) {
       return (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-3/4 h-3/4 rounded-full bg-accent/30 animate-pulse" />
-          <span className="absolute text-accent font-bold text-lg">✕</span>
+          <div className={cn(
+            "w-3/4 h-3/4 rounded-full bg-accent/30",
+            isSunk ? "animate-sink" : "animate-pulse"
+          )} />
+          <span className={cn(
+            "absolute text-accent font-bold text-lg",
+            isSunk && "animate-fireFlicker"
+          )}>
+            {isSunk ? '🔥' : '✕'}
+          </span>
         </div>
       );
     }
+
     if (state === 'miss') {
       return (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -84,6 +127,7 @@ export function GameBoard({
         </div>
       );
     }
+    
     return null;
   };
 
@@ -127,24 +171,29 @@ export function GameBoard({
         <div className="border border-game-grid rounded overflow-hidden">
           {board.cells.map((row, rowIndex) => (
             <div key={rowIndex} className="flex">
-              {row.map((cell, colIndex) => (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  className={cn(
-                    cellSizes[size],
-                    getCellClassName(cell.state, cell.position)
-                  )}
-                  onClick={() => {
-                    if (!disabled && onCellClick) {
-                      onCellClick(cell.position);
-                    }
-                  }}
-                  onMouseEnter={() => onCellHover?.(cell.position)}
-                  onMouseLeave={() => onCellHover?.(null)}
-                >
-                  {renderCellContent(cell.state)}
-                </div>
-              ))}
+              {row.map((cell, colIndex) => {
+                const { ship } = getShipInfo(cell.shipId);
+                const hasShipSprite = showShips && !isAttackBoard && !!ship;
+                
+                return (
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    className={cn(
+                      cellSizes[size],
+                      getCellClassName(cell.state, cell.position, hasShipSprite)
+                    )}
+                    onClick={() => {
+                      if (!disabled && onCellClick) {
+                        onCellClick(cell.position);
+                      }
+                    }}
+                    onMouseEnter={() => onCellHover?.(cell.position)}
+                    onMouseLeave={() => onCellHover?.(null)}
+                  >
+                    {renderCellContent(cell.state, cell.shipId, cell.position)}
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
