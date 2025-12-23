@@ -50,18 +50,6 @@
     --valid-placement: 142 70% 45%;
     --invalid-placement: 0 84% 60%;
 
-    /* Ship colors by type */
-    --ship-carrier: 220 25% 30%;
-    --ship-carrier-deck: 220 30% 40%;
-    --ship-battleship: 200 20% 35%;
-    --ship-battleship-deck: 200 25% 45%;
-    --ship-cruiser: 180 20% 32%;
-    --ship-cruiser-deck: 180 25% 42%;
-    --ship-submarine: 240 15% 28%;
-    --ship-submarine-deck: 240 20% 38%;
-    --ship-destroyer: 160 18% 30%;
-    --ship-destroyer-deck: 160 22% 40%;
-
     /* Gradients */
     --gradient-ocean: linear-gradient(180deg, hsl(222 47% 8%) 0%, hsl(222 47% 4%) 100%);
     --gradient-tactical: linear-gradient(135deg, hsl(222 47% 10%) 0%, hsl(222 47% 6%) 100%);
@@ -213,47 +201,4 @@
   25% { transform: translateX(5px) translateY(-3px); }
   50% { transform: translateX(0) translateY(-5px); }
   75% { transform: translateX(-5px) translateY(-3px); }
-}
-
-/* Ship sinking animation */
-@keyframes sink {
-  0% { 
-    transform: translateY(0) rotate(0deg);
-    opacity: 1;
-  }
-  30% {
-    transform: translateY(2px) rotate(3deg);
-    opacity: 0.9;
-  }
-  60% {
-    transform: translateY(4px) rotate(-2deg);
-    opacity: 0.7;
-  }
-  100% { 
-    transform: translateY(6px) rotate(5deg);
-    opacity: 0.5;
-  }
-}
-
-/* Ship hit animation */
-@keyframes shipHit {
-  0%, 100% { transform: scale(1); }
-  25% { transform: scale(1.05) rotate(-2deg); }
-  50% { transform: scale(0.98) rotate(2deg); }
-  75% { transform: scale(1.02) rotate(-1deg); }
-}
-
-/* Fire flicker effect */
-@keyframes fireFlicker {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  25% { opacity: 1; transform: scale(1.1) translateY(-1px); }
-  50% { opacity: 0.7; transform: scale(0.95); }
-  75% { opacity: 0.9; transform: scale(1.05) translateY(-2px); }
-}
-
-/* Bubble rising effect */
-@keyframes bubbles {
-  0% { transform: translateY(0); opacity: 0.6; }
-  50% { transform: translateY(-4px); opacity: 0.8; }
-  100% { transform: translateY(-8px); opacity: 0; }
 }
